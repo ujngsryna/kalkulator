@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Kalkulator Skor</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #2c2c2c;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #f0f0f0;
+            margin-bottom: 30px;
+        }
+        .player-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            padding: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .player-name {
+            flex: 1;
+            margin-right: 15px;
+        }
+        .player-name input {
+            width: 100%;
+            background-color: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+            padding: 5px;
+        }
+        .skor-container {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+        }
+        .total-skor {
+            font-weight: bold;
+            color: #4CAF50;
+            font-size: 18px;
+            text-align: right;
+            margin-top: 10px;
+        }
+        .riwayat-skor {
+            background-color: #3a3a3a;
+            border-radius: 6px;
+            padding: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .riwayat-skor:hover {
+            background-color: #4a4a4a;
+        }
+        .riwayat-skor-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+        .riwayat-skor-item:nth-child(odd) {
+            background-color: rgba(255,255,255,0.05);
+        }
+        .riwayat-skor-item:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        .riwayat-skor-item .skor {
+            font-weight: bold;
+        }
+        .riwayat-skor-item .skor-positif {
+            color: #4CAF50;
+        }
+        .riwayat-skor-item .skor-negatif {
+            color: #F44336;
+        }
+        #modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #2c2c2c;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+        }
+        .modal-content h2 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+        .modal-content p {
+            color: #ffffff;
+            margin-bottom: 30px;
+        }
+        .modal-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .modal-btn:hover {
+            background-color: #45a049;
+        }
+        #numeric-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .numeric-modal-content {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            width: 300px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .numeric-display {
+            background-color: #2c2c2c;
+            color: #ffffff;
+            text-align: right;
+            padding: 15px;
+            font-size: 24px;
+            border-bottom: 1px solid #444;
+        }
+        .numeric-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 10px;
+}
+.numeric-keypad .empty-space {
+    /* Membuat ruang kosong di pojok kiri bawah */
+}
+
+.numeric-keypad .number[data-value="0"] {
+    grid-column: 2;  /* Memposisikan 0 di tengah */
+}
+
+.numeric-keypad .ok {
+    grid-column: 3;  /* Memindahkan OK ke pojok kanan */
+    grid-row: 5;
+}
+.numeric-keypad button {
+    background-color: #3a3a3a;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 15px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.numeric-keypad .number {
+    background-color: #2c2c2c;
+}
+
+.numeric-keypad .action {
+    background-color: #4CAF50;
+}
+
+.numeric-keypad .delete {
+    background-color: #F44336;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kalkulator Skor</h1>
+        <div id="playerContainer">
+            <div class="player-row">
+                <div class="player-name">
+                    <input type="text" placeholder="Masukkan nama pemain">
+                </div>
+                <div class="skor-container">
+                    <div class="riwayat-skor" onclick="showNumericModal(this)">
+                        Tambah Skor
+                    </div>
+                    <div class="total-skor">Total: 0</div>
+                </div>
+            </div>
+            <div class="player-row">
+                <div class="player-name">
+                    <input type="text" placeholder="Masukkan nama pemain">
+                </div>
+                <div class="skor-container">
+                    <div class="riwayat-skor" onclick="showNumericModal(this)">
+                        Tambah Skor
+                    </div>
+                    <div class="total-skor">Total: 0</div>
+                </div>
+            </div>
+            <div class="player-row">
+                <div class="player-name">
+                    <input type="text" placeholder="Masukkan nama pemain">
+                </div>
+                <div class="skor-container">
+                    <div class="riwayat-skor" onclick="showNumericModal(this)">
+                        Tambah Skor
+                    </div>
+                    <div class="total-skor">Total: 0</div>
+                </div>
+            </div>
+            <div class="player-row">
+                <div class="player-name">
+                    <input type="text" placeholder="Masukkan nama pemain">
+                </div>
+                <div class="skor-container">
+                    <div class="riwayat-skor" onclick="showNumericModal(this)">
+                        Tambah Skor
+                    </div>
+                    <div class="total-skor">Total: 0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-overlay">
+        <div class="modal-content">
+            <h2>Selamat!</h2>
+            <p id="modal-text"></p>
+            <button class="modal-btn" onclick="resetGame()">Mulai Ulang</button>
+        </div>
+    </div>
+
+    <div id="numeric-modal">
+    <div class="numeric-modal-content">
+        <div class="numeric-display">0</div>
+        <div class="numeric-keypad">
+            <button class="action">C</button>
+            <button class="delete">⌫</button>
+            <button class="action">+/-</button>
+            <button class="number">7</button>
+            <button class="number">8</button>
+            <button class="number">9</button>
+            <button class="number">4</button>
+            <button class="number">5</button>
+            <button class="number">6</button>
+            <button class="number">1</button>
+            <button class="number">2</button>
+            <button class="number">3</button>
+            <div class="empty-space"></div>
+            <button class="number">0</button>
+            <button class="action">OK</button>
+        </div>
+    </div>
+</div>
+
+    <script>
+        let currentRiwayatSkorElement = null;
+let gameState = null;
+
+function simpanPemenang(playerName) {
+    let pemenangSebelumnya = JSON.parse(localStorage.getItem('pemenangSebelumnya') || '[]');
+    
+    // Cek apakah pemain sudah ada di daftar pemenang
+    if (!pemenangSebelumnya.includes(playerName)) {
+        pemenangSebelumnya.push(playerName);
+    }
+    
+    localStorage.setItem('pemenangSebelumnya', JSON.stringify(pemenangSebelumnya));
+}
+
+function tambahkanPemenangKeUI() {
+    const pemenangSebelumnya = JSON.parse(localStorage.getItem('pemenangSebelumnya') || '[]');
+    const playerRows = document.querySelectorAll('.player-row');
+    
+    playerRows.forEach(row => {
+        const nameInput = row.querySelector('.player-name input');
+        const namaPemain = nameInput.value;
+        
+        // Hapus bintang yang sudah ada
+        const existingStar = row.querySelector('.winner-star');
+        if (existingStar) {
+            existingStar.remove();
+        }
+        
+        // Tambahkan bintang jika pemain ada di daftar pemenang
+        if (pemenangSebelumnya.includes(namaPemain)) {
+            const starElement = document.createElement('span');
+            starElement.innerHTML = '⭐';
+            starElement.classList.add('winner-star');
+            starElement.style.marginLeft = '10px';
+            nameInput.parentElement.appendChild(starElement);
+        }
+    });
+}
+
+function simpanStatePermainan() {
+    const gameData = {
+        players: [],
+        currentGame: 1,
+        pemenangSebelumnya: JSON.parse(localStorage.getItem('pemenangSebelumnya') || '[]')
+    };
+
+    const playerRows = document.querySelectorAll('.player-row');
+    playerRows.forEach(row => {
+        const nameInput = row.querySelector('.player-name input');
+        const riwayatSkor = row.querySelector('.riwayat-skor');
+        const totalSkor = row.querySelector('.total-skor');
+
+        gameData.players.push({
+            playerName: nameInput.value,
+            riwayatSkor: riwayatSkor.innerHTML,
+            totalSkor: totalSkor.textContent
+        });
+    });
+
+    localStorage.setItem('gameStateComplete', JSON.stringify(gameData));
+}
+
+function loadStatePermainan() {
+    const savedGameState = localStorage.getItem('gameStateComplete');
+    if (savedGameState) {
+        const gameData = JSON.parse(savedGameState);
+        const playerRows = document.querySelectorAll('.player-row');
+
+        gameData.players.forEach((data, index) => {
+            const nameInput = playerRows[index].querySelector('.player-name input');
+            const riwayatSkor = playerRows[index].querySelector('.riwayat-skor');
+            const totalSkor = playerRows[index].querySelector('.total-skor');
+
+            nameInput.value = data.playerName;
+            riwayatSkor.innerHTML = data.riwayatSkor;
+            totalSkor.textContent = data.totalSkor;
+        });
+
+        // Tambahkan pemenang ke UI
+        tambahkanPemenangKeUI();
+    }
+}
+
+function showNumericModal(riwayatSkorElement) {
+    currentRiwayatSkorElement = riwayatSkorElement;
+    const numericModal = document.getElementById('numeric-modal');
+    const numericDisplay = numericModal.querySelector('.numeric-display');
+    numericDisplay.textContent = '0';
+    numericModal.style.display = 'flex';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const numericModal = document.getElementById('numeric-modal');
+    const numericModalContent = numericModal.querySelector('.numeric-modal-content');
+    
+    // Cegah event click pada konten modal agar tidak menyebar
+    numericModalContent.addEventListener('click', function(event) {
+        event.stopPropagation();
+    });
+
+    // Tutup modal jika diklik di luar area
+    numericModal.addEventListener('click', function(event) {
+        if (event.target === numericModal) {
+            numericModal.style.display = 'none';
+        }
+    });
+
+    // Tambahkan event listener untuk semua tombol
+    const buttons = numericModal.querySelectorAll('button');
+    
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            if (this.classList.contains('number')) {
+                appendNumber(this.textContent);
+            } else if (this.textContent === 'C') {
+                clearDisplay();
+            } else if (this.textContent === '⌫') {
+                deleteLastDigit();
+            } else if (this.textContent === '+/-') {
+                toggleSign();
+            } else if (this.textContent === 'OK') {
+                submitNumber();
+            }
+        });
+    });
+
+    // Cek apakah ada state permainan yang tersimpan
+    loadStatePermainan();
+});
+
+function appendNumber(number) {
+    const numericDisplay = document.getElementById('numeric-modal').querySelector('.numeric-display');
+    let currentValue = numericDisplay.textContent;
+    
+    // Jika saat ini 0 atau -0, ganti langsung dengan angka baru
+    if (currentValue === '0' || currentValue === '-0') {
+        numericDisplay.textContent = number;
+    } 
+    // Jika belum mencapai batas 4 digit
+    else if (currentValue.replace('-', '').length < 4) {
+        numericDisplay.textContent = currentValue + number;
+    }
+}
+
+function toggleSign() {
+    const numericDisplay = document.getElementById('numeric-modal').querySelector('.numeric-display');
+    let currentValue = numericDisplay.textContent;
+    
+    if (currentValue.startsWith('-')) {
+        numericDisplay.textContent = currentValue.slice(1);
+    } else {
+        numericDisplay.textContent = '-' + currentValue;
+    }
+}
+
+function deleteLastDigit() {
+    const numericDisplay = document.getElementById('numeric-modal').querySelector('.numeric-display');
+    let currentValue = numericDisplay.textContent;
+    
+    // Jika hanya satu digit atau -0, kembalikan ke 0
+    if (currentValue.length === 1 || currentValue === '-0') {
+        numericDisplay.textContent = '0';
+    } else {
+        // Hapus digit terakhir
+        numericDisplay.textContent = currentValue.slice(0, -1);
+    }
+}
+
+function clearDisplay() {
+    const numericDisplay = document.getElementById('numeric-modal').querySelector('.numeric-display');
+    numericDisplay.textContent = '0';
+}
+
+function submitNumber() {
+    const numericModal = document.getElementById('numeric-modal');
+    const numericDisplay = numericModal.querySelector('.numeric-display');
+    const nilaiTambah = parseInt(numericDisplay.textContent);
+    
+    // Tutup modal
+    numericModal.style.display = 'none';
+    
+    // Jika riwayat masih berisi "Tambah Skor", reset
+    if (currentRiwayatSkorElement.textContent.trim() === 'Tambah Skor') {
+        currentRiwayatSkorElement.innerHTML = '';
+    }
+    
+    // Buat elemen baru untuk skor
+    const skorElement = document.createElement('div');
+    skorElement.classList.add('riwayat-skor-item');
+    
+    // Tentukan warna berdasarkan positif/negatif
+    const skorClass = nilaiTambah >= 0 ? 'skor-positif' : 'skor-negatif';
+    
+    skorElement.innerHTML = `
+        <span class="skor ${skorClass}">${nilaiTambah > 0 ? '+' : ''}${nilaiTambah}</span>
+        <span class="tanggal">${new Date().toLocaleTimeString()}</span>
+    `;
+    
+    // Tambahkan elemen skor ke riwayat
+    currentRiwayatSkorElement.appendChild(skorElement);
+    
+    // Hitung total skor
+    const totalSkor = hitungTotalSkor(currentRiwayatSkorElement);
+    
+    // Simpan state permainan setelah submit
+    simpanStatePermainan();
+    
+    // Periksa apakah permainan berakhir
+    periksaAkhirPermainan(currentRiwayatSkorElement, totalSkor);
+}
+
+function hitungTotalSkor(riwayatSkorElement) {
+    // Ambil semua elemen skor
+    const skorElements = riwayatSkorElement.querySelectorAll('.skor');
+    
+    // Hitung total
+    const totalSkor = Array.from(skorElements).reduce((total, el) => {
+        return total + parseInt(el.textContent);
+    }, 0);
+    
+    // Update total skor
+    const totalSkorElement = riwayatSkorElement.nextElementSibling;
+    totalSkorElement.textContent = `Total: ${totalSkor}`;
+    
+    return totalSkor;
+}
+
+function periksaAkhirPermainan(riwayatSkorElement, totalSkor) {
+    // Jika total skor mencapai atau melebihi 1000
+    if (totalSkor >= 1000) {
+        // Cari nama pemain
+        const playerNameInput = riwayatSkorElement.closest('.player-row')
+            .querySelector('.player-name input');
+        const playerName = playerNameInput.value || 'Pemain Tanpa Nama';
+        
+        // Simpan pemenang
+        simpanPemenang(playerName);
+        
+        // Tambahkan pemenang ke UI
+        tambahkanPemenangKeUI();
+        
+        // Simpan state permainan sebelum menampilkan modal
+        simpanStatePermainan();
+        
+        // Buat modal kustom dengan pilihan
+        const modalOverlay = document.createElement('div');
+        modalOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        `;
+
+        modalOverlay.innerHTML = `
+            <div style="
+                background: #2c2c2c;
+                padding: 30px;
+                border-radius: 15px;
+                text-align: center;
+                max-width: 400px;
+                width: 90%;
+            ">
+                <h2 style="color: #4CAF50; margin-bottom: 20px;">Selamat!</h2>
+                <p style="color: #ffffff; margin-bottom: 20px;">
+                    ${playerName} telah mencapai skor 1000! 
+                    Apa yang ingin Anda lakukan selanjutnya?
+                </p>
+                <div style="display: flex; justify-content: center; gap: 15px;">
+                    <button id="nextGameBtn" style="
+                        background: #4CAF50; 
+                        color: white; 
+                        border: none; 
+                        padding: 10px 20px; 
+                        border-radius: 5px; 
+                        cursor: pointer;
+                    ">Lanjut Game</button>
+                    <button id="endGameBtn" style="
+                        background: #F44336; 
+                        color: white; 
+                        border: none; 
+                        padding: 10px 20px; 
+                        border-radius: 5px; 
+                        cursor: pointer;
+                    ">Selesai</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modalOverlay);
+
+        // Tambahkan event listener untuk tombol
+        document.getElementById('nextGameBtn').addEventListener('click', function() {
+            // Lanjut ke game berikutnya (misalnya reset skor tapi tetap simpan nama)
+            const playerRows = document.querySelectorAll('.player-row');
+            playerRows.forEach(row => {
+                // Reset riwayat skor
+                const riwayatSkor = row.querySelector('.riwayat-skor');
+                riwayatSkor.innerHTML = 'Tambah Skor';
+                
+                // Reset total skor
+                const totalSkor = row.querySelector('.total-skor');
+                totalSkor.textContent = 'Total: 0';
+            });
+
+            // Simpan state untuk game selanjutnya
+            simpanStatePermainan();
+            
+            // Tutup modal
+            modalOverlay.remove();
+        });
+
+        document.getElementById('endGameBtn').addEventListener('click', function() {
+    // Reset total game
+    resetGame();
+    
+    // Paksa refresh halaman
+    window.location.reload();
+});
+    }
+}
+
+function resetGame() {
+    // Sembunyikan modal
+    const modalOverlay = document.getElementById('modal-overlay');
+    if (modalOverlay) modalOverlay.style.display = 'none';
+    
+    // Reset semua baris pemain
+    const playerRows = document.querySelectorAll('.player-row');
+    playerRows.forEach(row => {
+        // Reset nama
+        const nameInput = row.querySelector('.player-name input');
+        nameInput.value = '';
+        
+        // Reset riwayat skor
+        const riwayatSkor = row.querySelector('.riwayat-skor');
+        riwayatSkor.innerHTML = 'Tambah Skor';
+        
+        // Reset total skor
+        const totalSkor = row.querySelector('.total-skor');
+        totalSkor.textContent = 'Total: 0';
+        
+        // Hapus bintang
+        const existingStar = row.querySelector('.winner-star');
+        if (existingStar) {
+            existingStar.remove();
+        }
+    });
+
+    // Hapus state tersimpan
+    localStorage.removeItem('gameStateComplete');
+    localStorage.removeItem('pemenangSebelumnya');
+}
+    </script>
+</body>
